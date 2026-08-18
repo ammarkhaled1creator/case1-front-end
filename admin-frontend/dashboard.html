@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>try{var t=localStorage.getItem('tailora_theme')||'dark';document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Dashboard — Tailora Admin</title>
+
+  <link rel="icon" type="image/png" href="images/logo.png">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Bootstrap 5 -->
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+
+  <!-- Bootstrap Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"
+  >
+
+  <!-- Tailora Design System -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+
+<body
+  data-page="dashboard"
+  data-page-title="Dashboard"
+  data-breadcrumb="Overview, Dashboard"
+  data-requires-auth="true"
+>
+
+<div class="tl-app">
+
+  <!-- =========================================================
+       SIDEBAR
+       ========================================================= -->
+  <aside class="tl-sidebar" id="tlSidebar" aria-label="Sidebar navigation"></aside>
+
+  <!-- =========================================================
+       MAIN
+       ========================================================= -->
+  <div class="tl-main">
+
+    <!-- Topbar injected by app.js -->
+    <header class="tl-topbar" id="tlTopbar"></header>
+
+    <!-- =======================================================
+         CONTENT
+         ======================================================= -->
+    <main class="tl-content">
+
+      <!-- Page Header -->
+      <div class="tl-page-header">
+        <div>
+          <div class="tl-eyebrow">
+            <span class="tl-badge tl-badge--info">
+              <i class="bi bi-stars"></i>
+              Tailora Intelligence
+            </span>
+          </div>
+
+          <h1 class="tl-page-title">
+            Admin's Dashboard
+          </h1>
+
+          <p class="tl-text-secondary">
+            Monitor trips, travelers and live system metrics from one place.
+          </p>
+        </div>
+      </div>
+
+      <!-- =====================================================
+           KPI CARDS
+           ===================================================== -->
+      <section class="tl-grid tl-grid--kpi">
+
+        <!-- Total Trips -->
+        <div class="tl-card tl-stat-card">
+          <div class="tl-card__head mb-0">
+            <span class="tl-label">Total Trips</span>
+            <i class="bi bi-map tl-card-icon"></i>
+          </div>
+
+          <div class="tl-stat-card__value" id="kpiTotalTrips">
+            Loading…
+          </div>
+
+          <p class="tl-metadata mb-0">
+            Total trips created in the system.
+          </p>
+        </div>
+
+        <!-- Trips Today -->
+        <div class="tl-card tl-stat-card">
+          <div class="tl-card__head mb-0">
+            <span class="tl-label">Trips Today</span>
+            <i class="bi bi-calendar-day tl-card-icon"></i>
+          </div>
+
+          <div class="tl-stat-card__value" id="kpiTripsToday">
+            Loading…
+          </div>
+
+          <p class="tl-metadata mb-0">
+            Trips created today.
+          </p>
+        </div>
+
+        <!-- Trips This Month -->
+        <div class="tl-card tl-stat-card">
+          <div class="tl-card__head mb-0">
+            <span class="tl-label">Trips This Month</span>
+            <i class="bi bi-calendar3 tl-card-icon"></i>
+          </div>
+
+          <div class="tl-stat-card__value" id="kpiTripsMonth">
+            Loading…
+          </div>
+
+          <p class="tl-metadata mb-0">
+            Trips created during current month.
+          </p>
+        </div>
+
+        <!-- Analytics Status -->
+        <div class="tl-card tl-stat-card">
+          <div class="tl-card__head mb-0">
+            <span class="tl-label">Analytics API</span>
+            <i class="bi bi-bar-chart tl-card-icon"></i>
+          </div>
+
+          <div class="tl-stat-card__value" id="kpiAnalyticsStatus" style="font-size: 19px;">
+            Loading…
+          </div>
+
+          <p class="tl-metadata mb-0">
+            Dashboard analytics API health.
+          </p>
+        </div>
+
+      </section>
+
+      <!-- =====================================================
+           DASHBOARD TABLES
+           ===================================================== -->
+      <div class="tl-grid tl-grid--2 mt-3">
+
+        <!-- Latest Trips -->
+        <section class="tl-card tl-card--flush">
+          <div class="tl-card__head" style="padding: 20px 20px 0;">
+            <div>
+              <span class="tl-label">Travel Activity</span>
+              <h2 class="tl-section-title" style="margin-top: 4px;">
+                Latest Trips
+              </h2>
+            </div>
+            <i class="bi bi-map tl-card-icon"></i>
+          </div>
+
+          <div id="latestTrips" style="padding: 0 20px 20px;">
+            <div class="tl-empty">
+              <div class="tl-empty__icon">
+                <i class="bi bi-arrow-repeat"></i>
+              </div>
+              <p class="tl-text-secondary">
+                Loading latest trips…
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Top Users -->
+        <section class="tl-card tl-card--flush">
+          <div class="tl-card__head" style="padding: 20px 20px 0;">
+            <div>
+              <span class="tl-label">Travelers</span>
+              <h2 class="tl-section-title" style="margin-top: 4px;">
+                Top Users
+              </h2>
+            </div>
+            <i class="bi bi-people tl-card-icon"></i>
+          </div>
+
+          <div id="topUsers" style="padding: 0 20px 20px;">
+            <div class="tl-empty">
+              <div class="tl-empty__icon">
+                <i class="bi bi-arrow-repeat"></i>
+              </div>
+              <p class="tl-text-secondary">
+                Loading top users…
+              </p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- =====================================================
+           ANALYTICS RESPONSE
+           ===================================================== -->
+      <section class="tl-card mt-3">
+        <div class="tl-card__head">
+          <div>
+            <span class="tl-label">Intelligence</span>
+            <h2 class="tl-section-title" style="margin-top: 4px;">
+              Dashboard Analytics
+            </h2>
+          </div>
+          <i class="bi bi-bar-chart-line tl-card-icon"></i>
+        </div>
+
+        <div id="analyticsPayloadState">
+          <div class="tl-empty">
+            <div class="tl-empty__icon">
+              <i class="bi bi-bar-chart"></i>
+            </div>
+            <p class="tl-text-secondary">
+              Loading analytics…
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+</div>
+
+<!-- Bootstrap & Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+<!-- API Modules -->
+<script src="assets/js/api/api.js"></script>
+<script src="assets/js/api/auth.js"></script>
+<script src="assets/js/api/analytics.js"></script>
+<script src="assets/js/api/trips.js"></script>
+
+<!-- Global Shell -->
+<script src="assets/js/app.js"></script>
+
+<!-- Dashboard Page Script -->
+<script src="assets/js/pages/dashboard.js"></script>
+
+</body>
+</html>

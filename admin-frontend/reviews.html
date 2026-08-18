@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>try{var t=localStorage.getItem('tailora_theme')||'dark';document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reviews — Tailora Admin</title>
+
+  <link rel="icon" type="image/png" href="images/logo.png">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- Tailora Design System -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+
+<body
+  data-page="reviews"
+  data-page-title="Reviews"
+  data-breadcrumb="Management, Reviews"
+  data-requires-auth="true"
+>
+
+  <div class="tl-app">
+    <aside class="tl-sidebar" id="tlSidebar" aria-label="Sidebar navigation"></aside>
+
+    <div class="tl-main">
+      <header class="tl-topbar" id="tlTopbar"></header>
+
+      <main class="tl-content">
+        <!-- Page Header -->
+        <div class="tl-page-header">
+          <div>
+            <div class="tl-eyebrow">
+              <span class="tl-badge tl-badge--info">
+                <i class="bi bi-star"></i> Moderation Queue
+              </span>
+            </div>
+            <h1 class="tl-page-title">Reviews</h1>
+            <p class="tl-text-secondary">
+              Moderate user reviews: approve, reject, or delete matching the Admin API.
+            </p>
+          </div>
+
+          <button id="reviewsRefresh" class="tl-btn tl-btn--outline" type="button">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+          </button>
+        </div>
+
+        <!-- Reviews Table Card -->
+        <section class="tl-card tl-card--flush">
+          <div class="tl-card__head" style="padding: 24px 24px 0;">
+            <div>
+              <h2 class="tl-section-title">Review Queue</h2>
+              <span class="tl-metadata">GET /reviews · Live Submissions</span>
+            </div>
+          </div>
+
+          <div id="reviewsState" style="padding: 0 24px 24px;"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Core API Modules -->
+  <script src="assets/js/api/api.js"></script>
+  <script src="assets/js/api/auth.js"></script>
+  <script src="assets/js/api/reviews.js"></script>
+
+  <!-- Shared App & Pages -->
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/pages/utils.js"></script>
+  <script src="assets/js/pages/reviews.js"></script>
+</body>
+</html>
