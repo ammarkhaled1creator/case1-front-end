@@ -48,7 +48,7 @@
             </div>
             <h1 class="tl-page-title">Reviews</h1>
             <p class="tl-text-secondary">
-              Moderate and manage traveler reviews and feedback.
+              Moderate and manage traveler reviews for trips and assigned tour guides.
             </p>
           </div>
 
@@ -59,14 +59,21 @@
 
         <!-- Reviews Table Card -->
         <section class="tl-card tl-card--flush">
-          <div class="tl-card__head" style="padding: 24px 24px 0;">
+          <div class="tl-card__head" style="padding: 24px 24px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <div>
               <h2 class="tl-section-title">Review Queue</h2>
-              <span class="tl-metadata">User feedback and ratings</span>
+              <span class="tl-metadata">User feedback and star ratings</span>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="d-flex gap-2 flex-wrap" id="reviewFilters">
+              <button type="button" class="tl-btn tl-btn--sm tl-btn--primary" data-filter="all">All Reviews</button>
+              <button type="button" class="tl-btn tl-btn--sm tl-btn--outline" data-filter="trip">Trip Reviews</button>
+              <button type="button" class="tl-btn tl-btn--sm tl-btn--outline" data-filter="tour_guide">Tour Guide Reviews</button>
             </div>
           </div>
 
-          <div id="reviewsState" style="padding: 0 24px 24px;"></div>
+          <div id="reviewsState" style="padding: 16px 24px 24px;"></div>
         </section>
       </main>
     </div>

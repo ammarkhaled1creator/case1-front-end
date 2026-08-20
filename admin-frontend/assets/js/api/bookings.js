@@ -21,9 +21,14 @@
     return window.TL.Api.put(`/bookings/${encodeURIComponent(id)}`, data);
   }
 
-  // DELETE /admin/bookings/{id}
-  function deleteBooking(id) {
-    return window.TL.Api.delete(`/bookings/${encodeURIComponent(id)}`);
+  // POST /admin/bookings/{id}/assign-guide
+  function assignGuide(id, tourGuideId) {
+    return window.TL.Api.post(`/bookings/${encodeURIComponent(id)}/assign-guide`, { tour_guide_id: tourGuideId });
+  }
+
+  // GET /admin/tour-guides/available
+  function getAvailableGuides() {
+    return window.TL.Api.get("/tour-guides/available");
   }
 
   window.TL = window.TL || {};
@@ -32,5 +37,7 @@
     getBooking,
     updateBooking,
     deleteBooking,
+    assignGuide,
+    getAvailableGuides,
   };
 })();

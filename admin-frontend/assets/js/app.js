@@ -35,6 +35,7 @@
         { id: "categories", label: "Categories", href: "categories.html", icon: "bi-grid" },
         { id: "bookings", label: "Bookings", href: "bookings.html", icon: "bi-calendar-check" },
         { id: "messages", label: "Contact Messages", href: "messages.html", icon: "bi-envelope" },
+        { id: "reviews", label: "Reviews", href: "reviews.html", icon: "bi-star" },
       ],
     },
     {

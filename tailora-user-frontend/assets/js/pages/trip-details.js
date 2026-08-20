@@ -158,6 +158,18 @@
             : ""
         }
 
+        ${
+          (trip.wants_tour_guide || trip.tour_guide || trip.tourGuide || trip.tour_guide_requests?.length || trip.tourGuideRequests?.length)
+            ? (trip.tour_guide?.name || trip.tourGuide?.name)
+              ? `<span class="tl-badge" style="border-color:var(--tl-teal);color:var(--tl-teal);">
+                  👤 Tour Guide: ${window.TL.Util.escape(trip.tour_guide?.name || trip.tourGuide?.name)}
+                </span>`
+              : `<span class="tl-badge" style="border-color:#f59e0b;color:#f59e0b;">
+                  ⏳ Tour Guide: Pending
+                </span>`
+            : ""
+        }
+
       </div>
     `;
   }

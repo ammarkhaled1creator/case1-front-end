@@ -150,12 +150,12 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 50;
   background: var(--tl-surface-solid);
   border: 1px solid var(--tl-border-strong);
   border-radius: var(--tl-radius-md);
   box-shadow: var(--tl-shadow-md);
-  max-height: 260px;
+  max-height: 280px;
   overflow-y: auto;
   display: none;
 }
@@ -164,7 +164,8 @@
   display: block;
 }
 
-.tl-search-suggest button {
+.tl-search-suggest button,
+.tl-suggest-item {
   width: 100%;
   text-align: left;
   padding: 11px 14px;
@@ -172,9 +173,14 @@
   border: none;
   color: var(--tl-text);
   font-size: 13.5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.tl-search-suggest button:hover {
+.tl-search-suggest button:hover,
+.tl-suggest-item:hover {
   background: var(--tl-surface-hover);
 }
 

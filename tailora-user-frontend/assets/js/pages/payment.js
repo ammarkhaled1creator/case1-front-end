@@ -93,14 +93,21 @@
     const btn = document.getElementById("create-payment-btn");
     btn.addEventListener("click", async () => {
       if (paymentCreated) return; // guards against double-submit / idempotency
+
+      const numBookingId = parseInt(bookingId, 10);
+      if (!numBookingId || isNaN(numBookingId)) {
+        showError("Invalid booking ID. Please return to the booking page to finalize your reservation.");
+        return;
+      }
+
       paymentCreated = true;
       btn.disabled = true;
       btn.textContent = "Processing payment…";
       showError("");
 
       try {
-        const response = await window.TL.Payments.create({ booking_id: bookingId });
-        const payment = window.TL.Util.pick(response, ["data", "payment"], response);
+        const response = await window.TL.Payments.create({ booking_id: numBookingId });
+        const payment = window.TL.Util.pick(response, ["data", "payment", "data.payment"], response);
         const paymentId = window.TL.Util.id(payment);
 
         btn.textContent = "✓ Paid";
@@ -127,12 +134,15 @@
     const shell = document.getElementById("payment-shell");
 
     let bookingId = getParam("booking_id");
-    if (!bookingId) {
+    if (!bookingId || isNaN(parseInt(bookingId, 10))) {
       const cartBooking = window.TL.Cart.getBooking();
-      bookingId = cartBooking ? window.TL.Util.id(cartBooking) : null;
+      const cId = cartBooking ? window.TL.Util.id(cartBooking) : null;
+      if (cId && !isNaN(parseInt(cId, 10))) {
+        bookingId = cId;
+      }
     }
 
-    if (!bookingId) {
+    if (!bookingId || isNaN(parseInt(bookingId, 10))) {
       noBooking.classList.remove("tl-hidden");
       shell.classList.add("tl-hidden");
       return;

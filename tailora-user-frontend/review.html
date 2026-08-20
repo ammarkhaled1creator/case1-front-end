@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Your Trip — Tailora</title>
+  <link rel="icon" href="assets/images/logo.png">
+  <link rel="stylesheet" href="assets/css/tailora.css">
+  <link rel="stylesheet" href="assets/css/nav.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <style>
+    .tl-star-rating {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 12px 0 18px;
+    }
+    .tl-star-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 32px;
+      color: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: transform var(--tl-fast) var(--tl-ease), color var(--tl-fast) var(--tl-ease);
+      line-height: 1;
+    }
+    .tl-star-btn:hover {
+      transform: scale(1.15);
+    }
+    .tl-star-btn.is-active,
+    .tl-star-btn.is-hovered {
+      color: #eab308;
+      text-shadow: 0 0 12px rgba(234, 179, 8, 0.4);
+    }
+    .tl-rating-label {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--tl-cyan);
+      margin-left: 10px;
+    }
+    .tl-review-card {
+      position: relative;
+      padding: 32px;
+      background: var(--tl-surface-solid);
+      border: 1px solid var(--tl-border);
+      border-radius: var(--tl-radius-lg);
+      margin-bottom: 28px;
+      box-shadow: var(--tl-shadow-md);
+      overflow: hidden;
+    }
+    .tl-review-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--tl-gradient-aura);
+    }
+    .tl-guide-box {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      background: var(--tl-surface);
+      border: 1px solid var(--tl-border);
+      margin-bottom: 20px;
+    }
+    .tl-guide-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--tl-gradient-aura);
+      color: #04070f;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .tl-submitted-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      color: #22c55e;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="tl-nav-mount"></div>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="tl-hero" style="padding-bottom:24px;">
+      <div class="tl-hero-bg"></div>
+      <div class="tl-container">
+        <span class="tl-eyebrow">✦ Trip Feedback &amp; Ratings</span>
+        <h1 class="tl-display tl-mt-8" style="font-size:clamp(30px,4.5vw,48px);max-width:680px;">
+          Review Your Experience
+        </h1>
+        <p class="tl-hero-sub">
+          Share your authentic rating and feedback to help improve travel itineraries and recognize outstanding tour guides.
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Content Section -->
+    <section class="tl-section tl-section--tight" style="padding-top:16px;padding-bottom:72px;">
+      <div class="tl-container" style="max-width:860px;">
+
+        <!-- Signed Out State -->
+        <div id="review-signed-out" class="tl-card tl-state tl-hidden">
+          <div class="tl-state-icon">🔒</div>
+          <h3>Sign in to submit a review</h3>
+          <p>Please sign in with your traveler account to review your trip.</p>
+          <a href="signin.html?next=profile.html" class="tl-btn tl-btn--primary">Sign In</a>
+        </div>
+
+        <!-- Loading State -->
+        <div id="review-loading" class="tl-card tl-state" style="padding:48px 24px;">
+          <div class="tl-spinner" style="margin:0 auto 16px;width:36px;height:36px;border:3px solid var(--tl-border);border-top-color:var(--tl-cyan);border-radius:50%;animation:tl-spin 0.8s linear infinite;"></div>
+          <h3>Loading trip details…</h3>
+          <p class="tl-text-secondary" style="font-size:14px;">Preparing review form for your journey.</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="review-error" class="tl-card tl-state tl-hidden">
+          <div class="tl-state-icon">⚠️</div>
+          <h3 id="review-error-title">Trip Not Found</h3>
+          <p id="review-error-msg" class="tl-text-secondary">Unable to load review details for this trip.</p>
+          <a href="profile.html" class="tl-btn tl-btn--outline tl-mt-16">Back to My Trips</a>
+        </div>
+
+        <!-- Review Content Container -->
+        <div id="review-content" class="tl-hidden">
+
+          <!-- Trip Summary Banner -->
+          <div class="tl-card" style="padding:22px 28px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;background:var(--tl-surface);">
+            <div>
+              <span class="tl-text-secondary" style="font-size:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;display:block;margin-bottom:2px;">Selected Journey</span>
+              <h3 id="trip-summary-title" style="font-size:20px;font-weight:700;margin:0;font-family:var(--tl-font-display);">Trip</h3>
+              <div id="trip-summary-dates" class="tl-text-secondary" style="font-size:13.5px;margin-top:4px;"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <a id="view-planned-btn" href="#" class="tl-btn tl-btn--outline tl-btn--sm">View Planned Itinerary</a>
+              <a href="profile.html" class="tl-btn tl-btn--ghost tl-btn--sm">← My Trips</a>
+            </div>
+          </div>
+
+          <!-- =========================================================
+               1. TRIP REVIEW SECTION
+               ========================================================= -->
+          <div class="tl-review-card" id="trip-review-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+              <h3 style="font-size:20px;font-weight:700;margin:0;font-family:var(--tl-font-display);">Review this Trip</h3>
+              <span class="tl-badge" style="font-size:11px;">Itinerary &amp; Activities</span>
+            </div>
+            <p class="tl-text-secondary" style="font-size:13.5px;margin-bottom:16px;">
+              Rate your destination, scheduled activities, pace, and overall travel experience.
+            </p>
+
+            <div id="trip-review-alert" class="tl-auth-alert" role="alert"></div>
+            <div id="trip-review-status-badge"></div>
+
+            <form id="trip-review-form">
+              <input type="hidden" name="trip_id" id="trip-review-trip-id">
+
+              <!-- Star Rating -->
+              <div class="tl-field">
+                <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:4px;">Trip Rating</label>
+                <div class="tl-star-rating" id="trip-star-widget" data-rating="0">
+                  <button type="button" class="tl-star-btn" data-value="1" aria-label="1 star">★</button>
+                  <button type="button" class="tl-star-btn" data-value="2" aria-label="2 stars">★</button>
+                  <button type="button" class="tl-star-btn" data-value="3" aria-label="3 stars">★</button>
+                  <button type="button" class="tl-star-btn" data-value="4" aria-label="4 stars">★</button>
+                  <button type="button" class="tl-star-btn" data-value="5" aria-label="5 stars">★</button>
+                  <span class="tl-rating-label" id="trip-rating-text">Select rating</span>
+                </div>
+                <input type="hidden" id="trip-rating-input" name="rating" required>
+              </div>
+
+              <!-- Comment -->
+              <div class="tl-field" style="margin-bottom:20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <label for="trip-comment-input" style="margin:0;font-size:13.5px;">Your Trip Comment</label>
+                  <span id="trip-char-count" class="tl-text-secondary" style="font-size:12px;">0 / 1000</span>
+                </div>
+                <textarea
+                  class="tl-input"
+                  id="trip-comment-input"
+                  name="comment"
+                  rows="4"
+                  maxlength="1000"
+                  placeholder="What did you enjoy most about this trip? How was the schedule and places visited?"
+                  style="resize:vertical;min-height:110px;line-height:1.6;"
+                  required
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                class="tl-btn tl-btn--primary"
+                id="trip-submit-btn"
+                style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:14.5px;font-weight:700;"
+              >
+                <span>Submit Trip Review</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- =========================================================
+               2. TOUR GUIDE REVIEW SECTION (CONDITIONAL)
+               ========================================================= -->
+          <div class="tl-review-card tl-hidden" id="guide-review-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+              <h3 style="font-size:20px;font-weight:700;margin:0;font-family:var(--tl-font-display);">Review this Tour Guide</h3>
+              <span class="tl-badge" style="font-size:11px;background:rgba(32,227,194,0.12);color:var(--tl-teal);border-color:rgba(32,227,194,0.25);">Assigned Guide</span>
+            </div>
+            <p class="tl-text-secondary" style="font-size:13.5px;margin-bottom:16px;">
+              How was your experience with your assigned local expert guide?
+            </p>
+
+            <!-- Guide Profile Info -->
+            <div class="tl-guide-box">
+              <div class="tl-guide-avatar" id="guide-avatar">G</div>
+              <div>
+                <strong id="guide-name" style="font-size:15px;color:var(--tl-text);display:block;">Tour Guide</strong>
+                <span style="font-size:12.5px;color:var(--tl-teal);font-weight:600;">Verified Local Guide</span>
+              </div>
+            </div>
+
+            <div id="guide-review-alert" class="tl-auth-alert" role="alert"></div>
+            <div id="guide-review-status-badge"></div>
+
+            <form id="guide-review-form">
+              <input type="hidden" name="trip_id" id="guide-review-trip-id">
+
+              <!-- Star Rating -->
+              <div class="tl-field">
+                <label style="font-size:13.5px;font-weight:600;display:block;margin-bottom:4px;">Tour Guide Rating</label>
+                <div class="tl-star-rating" id="guide-star-widget" data-rating="0">
+                  <button type="button" class="tl-star-btn" data-value="1" aria-label="1 star">★</button>
+                  <button type="button" class="tl-star-btn" data-value="2" aria-label="2 stars">★</button>
+                  <button type="button" class="tl-star-btn" data-value="3" aria-label="3 stars">★</button>
+                  <button type="button" class="tl-star-btn" data-value="4" aria-label="4 stars">★</button>
+                  <button type="button" class="tl-star-btn" data-value="5" aria-label="5 stars">★</button>
+                  <span class="tl-rating-label" id="guide-rating-text">Select rating</span>
+                </div>
+                <input type="hidden" id="guide-rating-input" name="rating" required>
+              </div>
+
+              <!-- Comment -->
+              <div class="tl-field" style="margin-bottom:20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <label for="guide-comment-input" style="margin:0;font-size:13.5px;">Your Guide Feedback</label>
+                  <span id="guide-char-count" class="tl-text-secondary" style="font-size:12px;">0 / 1000</span>
+                </div>
+                <textarea
+                  class="tl-input"
+                  id="guide-comment-input"
+                  name="comment"
+                  rows="4"
+                  maxlength="1000"
+                  placeholder="How was the communication, knowledge, and assistance provided by your guide?"
+                  style="resize:vertical;min-height:110px;line-height:1.6;"
+                  required
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                class="tl-btn tl-btn--primary"
+                id="guide-submit-btn"
+                style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:14.5px;font-weight:700;"
+              >
+                <span>Submit Tour Guide Review</span>
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="tl-footer-mount"></div>
+
+  <!-- Scripts -->
+  <script src="assets/js/api/api.js"></script>
+  <script src="assets/js/api/auth.js"></script>
+  <script src="assets/js/api/catalog.js"></script>
+  <script src="assets/js/api/trips.js"></script>
+  <script src="assets/js/api/reviews.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/pages/review.js"></script>
+</body>
+</html>

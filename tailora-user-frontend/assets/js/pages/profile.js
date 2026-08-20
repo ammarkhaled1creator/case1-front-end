@@ -148,27 +148,50 @@
   }
 
   /* --------------------------- Trips --------------------------- */
+  function tripCard(item) {
+    const id = window.TL.Util.id(item);
+    const countryName = extractCountryName(item);
 
-  function tripCard(trip) {
-    const id = window.TL.Util.id(trip);
-    const countryName = extractCountryName(trip);
-
-    const start = window.TL.Util.pick(trip, ["start_date", "starts_at"], "");
-    const end = window.TL.Util.pick(trip, ["end_date", "ends_at"], "");
-    const status = window.TL.Util.pick(trip, ["status"], "");
+    const start = window.TL.Util.pick(item, ["start_date", "starts_at"], "");
+    const end = window.TL.Util.pick(item, ["end_date", "ends_at"], "");
+    const status = window.TL.Util.pick(item, ["status"], "");
     
     const formattedStart = start ? window.TL.Util.formatDate(start) : "";
     const formattedEnd = end ? window.TL.Util.formatDate(end) : "";
+
+    const wantsGuide = Boolean(
+      window.TL.Util.pick(item, ["wants_tour_guide"], false) ||
+      item.tour_guide_requests?.length ||
+      item.tourGuideRequests?.length ||
+      item.tour_guide_id ||
+      item.tourGuide
+    );
+    const guideObj = window.TL.Util.pick(item, ["tour_guide", "tourGuide"], null);
+    const guideName = window.TL.Util.pick(guideObj || item, ["name", "full_name", "tour_guide_name"], "");
+
+    let guideHtml = "";
+    if (wantsGuide) {
+      if (guideName) {
+        guideHtml = `<div class="tl-place-meta tl-mt-8" style="color:var(--tl-teal);font-weight:600;"><i class="bi bi-person-badge"></i> Tour Guide: ${window.TL.Util.escape(guideName)}</div>`;
+      } else {
+        guideHtml = `<div class="tl-place-meta tl-mt-8" style="color:#f59e0b;font-weight:600;"><i class="bi bi-clock-history"></i> Tour Guide: Pending</div>`;
+      }
+    }
     
     return `
-    <a href="trip-details.html?id=${encodeURIComponent(id)}" class="tl-card" style="padding:20px;display:block;">
+    <div class="tl-card" style="padding:20px;display:block;">
       <div class="tl-flex tl-justify-between tl-items-center" style="margin-bottom:8px;">
         <h3 style="font-size:16px;font-weight:700;">${window.TL.Util.escape(countryName)}</h3>
         ${status ? `<span class="tl-badge">${window.TL.Util.escape(status)}</span>` : ""}
       </div>
       ${countryName && countryName !== "Trip" ? `<div class="tl-place-meta">📍 ${window.TL.Util.escape(countryName)}</div>` : ""}
       ${formattedStart || formattedEnd ? `<div class="tl-place-meta tl-mt-8">🗓️ ${formattedStart}${formattedEnd ? ` – ${formattedEnd}` : ""}</div>` : ""}
-    </a>`;
+      ${guideHtml}
+      <div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <a href="trip-details.html?id=${encodeURIComponent(id)}" class="tl-btn tl-btn--outline tl-btn--sm">Planned</a>
+        <a href="review.html?trip_id=${encodeURIComponent(id)}" class="tl-btn tl-btn--primary tl-btn--sm">Review</a>
+      </div>
+    </div>`;
   }
 
   async function loadTrips() {
@@ -178,22 +201,45 @@
     try {
       await ensureCountriesMap();
 
-      let response;
-      if (window.TL.Trips && typeof window.TL.Trips.all === "function") {
-        response = await window.TL.Trips.all();
-      } else {
-        response = await window.TL.Api.get("/trips");
-      }
-      const rawTrips = window.TL.Util.list(response);
-      const trips = window.TL.Util.uniqueBy(rawTrips, (t) => window.TL.Util.id(t));
-      if (!trips.length) {
+      let tripsResponse = null, bookingsResponse = null;
+      try {
+        tripsResponse = await (window.TL.Trips && typeof window.TL.Trips.all === "function" ? window.TL.Trips.all() : window.TL.Api.get("/trips"));
+      } catch (e) {}
+
+      try {
+        bookingsResponse = await (window.TL.Bookings && typeof window.TL.Bookings.userIndex === "function" ? window.TL.Bookings.userIndex() : window.TL.Api.get("/bookings"));
+      } catch (e) {}
+
+      const rawTrips = window.TL.Util.list(tripsResponse);
+      const rawBookings = window.TL.Util.list(bookingsResponse);
+
+      const bookingMap = {};
+      rawBookings.forEach((b) => {
+        if (b.trip_id) bookingMap[String(b.trip_id)] = b;
+      });
+
+      const items = rawTrips.map((t) => {
+        const tId = window.TL.Util.id(t);
+        const b = bookingMap[String(tId)];
+        if (b) {
+          t.wants_tour_guide = b.wants_tour_guide || Boolean(b.tour_guide_requests?.length || b.tourGuideRequests?.length);
+          t.tour_guide = b.tour_guide || b.tourGuide;
+          t.tourGuide = b.tourGuide || b.tour_guide;
+          t.tour_guide_requests = b.tour_guide_requests || b.tourGuideRequests;
+        }
+        return t;
+      });
+
+      const displayItems = items.length ? items : rawBookings;
+
+      if (!displayItems.length) {
         const empty = window.TL.Util.emptyState("No trips yet", "Start planning to see your trips here.") +
           `<div class="tl-text-center"><a class="tl-btn tl-btn--primary tl-btn--sm" href="plan-trip.html">Plan a Trip</a></div>`;
         if (gridFull) gridFull.innerHTML = empty;
         return [];
       }
-      if (gridFull) gridFull.innerHTML = trips.map(tripCard).join("");
-      return trips;
+      if (gridFull) gridFull.innerHTML = displayItems.map(tripCard).join("");
+      return displayItems;
     } catch (err) {
       if (gridFull) gridFull.innerHTML = window.TL.Util.errorState(err.message);
       return [];

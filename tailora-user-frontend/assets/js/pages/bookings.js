@@ -117,29 +117,12 @@
     const checkbox = document.getElementById("tour-guide-checkbox");
     if (!checkbox) return;
     checkbox.checked = window.TL.Cart.getWantsTourGuide();
-    checkbox.addEventListener("change", async () => {
+    checkbox.addEventListener("change", () => {
       const isChecked = checkbox.checked;
       window.TL.Cart.setWantsTourGuide(isChecked);
       renderTotal();
-
       if (isChecked) {
-        try {
-          const guides = await window.TL.TourGuide.getTourGuides();
-          if (guides.length > 0) {
-            const guide = guides[0];
-            window.TL.Cart.setTourGuide(guide);
-            window.TL.toast(`Assigned tour guide: ${guide.name || "Tour Guide"}!`);
-
-            const activeTripId = window.TL.Cart.getActiveTripId();
-            if (activeTripId) {
-              await window.TL.TourGuide.assignTripToGuide(activeTripId, guide.id);
-            }
-          }
-        } catch (err) {
-          console.warn("Tour guide query note:", err);
-        }
-      } else {
-        window.TL.Cart.setTourGuide(null);
+        window.TL.toast("Tour guide requested. An available guide will be assigned by admin.");
       }
     });
   }
@@ -327,76 +310,53 @@
       }
 
       const wantsTourGuide = window.TL.Cart.getWantsTourGuide();
-      const payload = { wants_tour_guide: wantsTourGuide };
-      let guideId = null;
+      const tourGuide = window.TL.Cart.getTourGuide();
+      const guideId = (tourGuide && (tourGuide.id || tourGuide.tour_guide_id)) || null;
 
-      if (wantsTourGuide) {
-        const guide = window.TL.Cart.getTourGuide();
-        guideId = guide?.id;
-        if (!guideId) {
-          try {
-            const guides = await window.TL.TourGuide.getTourGuides();
-            if (guides.length > 0) {
-              guideId = guides[0].id;
-              window.TL.Cart.setTourGuide(guides[0]);
-            }
-          } catch (e) {}
-        }
-        if (guideId) {
-          payload.tour_guide_id = guideId;
-        }
+      const payload = { wants_tour_guide: wantsTourGuide };
+      if (guideId) {
+        payload.tour_guide_id = guideId;
       }
 
-      const activeTripId = window.TL.Cart.getActiveTripId();
-      if (activeTripId) {
-        payload.trip_id = activeTripId;
+      if (activeTripId && Number(activeTripId)) {
+        payload.trip_id = Number(activeTripId);
       }
 
       if (flight) {
         const fid = flightDbId(flight);
-        if (fid) payload.flight_id = fid;
-        if (flight.ignav_id) payload.ignav_id = flight.ignav_id;
+        if (fid && Number.isInteger(Number(fid))) {
+          payload.flight_id = Number(fid);
+        }
       }
       if (hotel) {
-        payload.hotel_id = hotel.hotel_id || hotel.id;
-        payload.number_of_nights = hotel.number_of_nights || 1;
+        const hid = hotel.hotel_id || hotel.id;
+        if (hid && Number.isInteger(Number(hid))) {
+          payload.hotel_id = Number(hid);
+        }
+        payload.number_of_nights = Number(hotel.number_of_nights || 1);
       }
+      payload.total_price = window.TL.Cart.getEstimatedTotal();
 
       btn.disabled = true;
       btn.textContent = "Creating your booking…";
       try {
-        let booking = null;
-        try {
-          const response = await window.TL.Bookings.create(payload);
-          booking = window.TL.Util.pick(response, ["data", "booking"], response);
-        } catch (apiErr) {
-          if (apiErr.status === 404 || apiErr.status === 500) {
-            console.warn("Backend booking API note:", apiErr);
-          } else {
-            throw apiErr;
-          }
+        const response = await window.TL.Bookings.create(payload);
+        const booking = window.TL.Util.pick(response, ["data", "booking", "data.booking"], response);
+        const bookingId = (booking && window.TL.Util.id(booking));
+
+        if (!bookingId || isNaN(Number(bookingId))) {
+          throw new Error("Could not retrieve a valid booking ID from server.");
         }
 
         if (wantsTourGuide && (activeTripId || booking)) {
           const targetTripId = activeTripId || window.TL.Util.pick(booking, ["trip_id", "trip.id"], null);
           if (targetTripId) {
-            await window.TL.TourGuide.assignTripToGuide(targetTripId, guideId);
+            try {
+              await window.TL.TourGuide.assignTripToGuide(targetTripId, guideId);
+            } catch (guideErr) {
+              console.warn("Tour guide assignment note:", guideErr);
+            }
           }
-        }
-
-        const bookingId = (booking && window.TL.Util.id(booking)) || `BK-${Date.now()}`;
-        if (!booking) {
-          booking = {
-            id: bookingId,
-            reference: `TL-${Math.floor(100000 + Math.random() * 900000)}`,
-            status: "pending",
-            flight,
-            hotel,
-            wants_tour_guide: wantsTourGuide,
-            tour_guide_id: guideId,
-            total_price: window.TL.Cart.getEstimatedTotal(),
-            created_at: new Date().toISOString()
-          };
         }
 
         window.TL.Cart.setBooking(booking);
