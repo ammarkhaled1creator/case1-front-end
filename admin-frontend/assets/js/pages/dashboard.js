@@ -79,7 +79,15 @@
     function formatDays(trip) {
       const start = trip.start_date ? formatDate(trip.start_date) : null;
       const end = trip.end_date ? formatDate(trip.end_date) : null;
-      const numDays = trip.num_days;
+      let numDays = trip.num_days;
+      if (!numDays && trip.start_date && trip.end_date) {
+        try {
+          const s = new Date(trip.start_date);
+          const e = new Date(trip.end_date);
+          const diff = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+          if (diff > 0) numDays = diff;
+        } catch (_) {}
+      }
 
       if (start && end) {
         if (numDays) {
@@ -120,8 +128,28 @@
      */
     if (window.TL && window.TL.Trips && typeof window.TL.Trips.getTripStatistics === "function") {
       try {
-        const tripsResult = await window.TL.Trips.getTripStatistics();
-        const data = getData(tripsResult);
+        const [tripsResult, countriesRes] = await Promise.allSettled([
+          window.TL.Trips.getTripStatistics(),
+          window.TL.Api.get("/countries?per_page=500")
+        ]);
+
+        const countriesMap = {};
+        if (countriesRes.status === "fulfilled" && countriesRes.value) {
+          const raw = countriesRes.value;
+          let cList = [];
+          if (Array.isArray(raw)) {
+            cList = raw;
+          } else if (raw && Array.isArray(raw.data)) {
+            cList = raw.data;
+          } else if (raw && raw.data && Array.isArray(raw.data.data)) {
+            cList = raw.data.data;
+          }
+          cList.forEach(c => {
+            if (c && c.id) countriesMap[c.id] = c.name;
+          });
+        }
+
+        const data = tripsResult.status === "fulfilled" ? getData(tripsResult.value) : {};
 
         // Total Trips
         if (totalTripsEl) {
@@ -145,7 +173,7 @@
             latestTripsEl.innerHTML = empty("No latest trips", "No trips found in the database.", "bi-map");
           } else {
             const rows = latestTrips.map(trip => {
-              const countryName = trip.country?.name || trip.dis_country || (trip.country_id ? `Country #${trip.country_id}` : "—");
+              const countryName = trip.country?.name || trip.country_name || trip.dis_country || countriesMap[trip.country_id] || "—";
               const travelerName = trip.user?.name || (trip.user_id ? `User #${trip.user_id}` : "—");
               const createdDate = formatDate(trip.created_at);
               const daysHtml = formatDays(trip);
@@ -153,7 +181,6 @@
 
               return `
                 <tr>
-                  <td><strong>#${escape(trip.id)}</strong></td>
                   <td>
                     <strong>${escape(countryName)}</strong>
                     <div class="tl-metadata">${escape(travelerName)}</div>
@@ -170,7 +197,6 @@
                 <table class="tl-table">
                   <thead>
                     <tr>
-                      <th>ID</th>
                       <th>Destination / Traveler</th>
                       <th>Days (From - To)</th>
                       <th>Style</th>

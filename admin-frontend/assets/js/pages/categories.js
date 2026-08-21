@@ -48,7 +48,6 @@
               <table class="tl-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Name</th>
                     <th>Actions</th>
                   </tr>
@@ -57,8 +56,7 @@
                   ${allCategories.map(function (category) {
                     return `
                       <tr>
-                        <td><strong>#${P.escape(P.display(category.id))}</strong></td>
-                        <td>${P.escape(P.display(category.name))}</td>
+                        <td><strong>${P.escape(P.display(category.name))}</strong></td>
                         <td>
                           <div class="tl-table-actions">
                             <button

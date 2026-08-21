@@ -60,8 +60,24 @@
     },
 
     async allFull() {
-      const response = await window.TL.Api.get("/cities", { per_page: 500 });
-      return window.TL.Util.list(response);
+      const all = [];
+      const perPage = 100;
+      let page = 1;
+
+      while (page <= 20) {
+        const response = await window.TL.Api.get("/cities", { page, per_page: perPage });
+        const items = window.TL.Util.list(response);
+
+        if (!items.length) break;
+
+        all.push(...items);
+
+        if (items.length < perPage) break;
+
+        page += 1;
+      }
+
+      return all;
     },
 
     get: function (id) {

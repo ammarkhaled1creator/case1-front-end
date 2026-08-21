@@ -20,6 +20,53 @@
     let cityCurrentPage = 1;
     let attractionCurrentPage = 1;
 
+    let countriesMap = {};
+    let citiesMap = {};
+
+    async function loadCountriesOptions() {
+      try {
+        const res = await TL.Api.get("/countries?per_page=500");
+        const list = P.list(res) || P.data(res) || [];
+        countriesMap = {};
+        const opts = ["<option value=''>Select country</option>"];
+        list.forEach(c => {
+          if (c && c.id) {
+            countriesMap[c.id] = c.name || `Country #${c.id}`;
+            opts.push(`<option value="${c.id}">${P.escape(c.name || `Country #${c.id}`)}</option>`);
+          }
+        });
+        const html = opts.join("");
+        const createSelect = document.getElementById("city_country_id");
+        const editSelect = document.getElementById("city_update_country_id");
+        if (createSelect) createSelect.innerHTML = html;
+        if (editSelect) editSelect.innerHTML = html;
+      } catch (e) {
+        console.warn("Failed to load countries:", e);
+      }
+    }
+
+    async function loadCitiesOptions() {
+      try {
+        const res = await TL.Cities.getCities({ per_page: 500 });
+        const list = P.list(res) || P.data(res) || [];
+        citiesMap = {};
+        const opts = ["<option value=''>Select city</option>"];
+        list.forEach(c => {
+          if (c && c.id) {
+            citiesMap[c.id] = c.name || `City #${c.id}`;
+            opts.push(`<option value="${c.id}">${P.escape(c.name || `City #${c.id}`)}</option>`);
+          }
+        });
+        const html = opts.join("");
+        const createSelect = document.getElementById("att_city_id");
+        const editSelect = document.getElementById("att_update_city_id");
+        if (createSelect) createSelect.innerHTML = html;
+        if (editSelect) editSelect.innerHTML = html;
+      } catch (e) {
+        console.warn("Failed to load cities options:", e);
+      }
+    }
+
     // Extract Form Fields Helper
     function extractFormFields(form) {
       const data = {};
@@ -80,6 +127,7 @@
         const response = await TL.Cities.getCities({ page: cityCurrentPage, per_page: perPage });
         const { rows, meta } = P.extractPagination(response, cityCurrentPage, perPage);
         renderCities(rows, meta);
+        await loadCitiesOptions();
       } catch (err) {
         citiesListEl.innerHTML = P.empty("Failed to load cities", err.message, "bi-exclamation-triangle text-danger");
       }
@@ -87,27 +135,26 @@
 
     function renderCities(cities, meta) {
       if (!Array.isArray(cities) || cities.length === 0) {
-        citiesListEl.innerHTML = P.empty("No cities found", "Add a city using the form below.");
+        citiesListEl.innerHTML = P.empty("No cities found", "Add a city using the form above.");
         return;
       }
 
       let html = `<div class="table-responsive"><table class="table tl-table align-middle">
         <thead>
           <tr>
-            <th>ID</th>
             <th>Name</th>
-            <th>Country ID</th>
+            <th>Country</th>
             <th class="text-end">Actions</th>
           </tr>
         </thead>
         <tbody>`;
 
       cities.forEach(city => {
+        const countryName = city.country?.name || countriesMap[city.country_id] || (city.country_id ? `Country #${city.country_id}` : "—");
         html += `
           <tr>
-            <td><span class="tl-label">#${city.id}</span></td>
             <td class="fw-bold">${P.escape(city.name)}</td>
-            <td>${P.escape(city.country_id)}</td>
+            <td><strong>${P.escape(countryName)}</strong></td>
             <td class="text-end">
               <button type="button" class="tl-btn tl-btn--outline tl-btn--sm city-edit-btn" 
                 data-id="${city.id}" 
@@ -231,16 +278,15 @@
 
     function renderAttractions(attractions, meta) {
       if (!Array.isArray(attractions) || attractions.length === 0) {
-        attractionsListEl.innerHTML = P.empty("No attractions found", "Add an attraction using the form below.");
+        attractionsListEl.innerHTML = P.empty("No attractions found", "Add an attraction using the form above.");
         return;
       }
 
       let html = `<div class="table-responsive"><table class="table tl-table align-middle">
         <thead>
           <tr>
-            <th>ID</th>
             <th>Name</th>
-            <th>City ID</th>
+            <th>City</th>
             <th>Price</th>
             <th class="text-end">Actions</th>
           </tr>
@@ -248,11 +294,11 @@
         <tbody>`;
 
       attractions.forEach(att => {
+        const cityName = att.city?.name || citiesMap[att.city_id] || (att.city_id ? `City #${att.city_id}` : "—");
         html += `
           <tr>
-            <td><span class="tl-label">#${att.id}</span></td>
             <td class="fw-bold">${P.escape(att.name)}</td>
-            <td>${P.escape(att.city_id)}</td>
+            <td><strong>${P.escape(cityName)}</strong></td>
             <td>${att.price ? '$' + parseFloat(att.price).toFixed(2) : '-'}</td>
             <td class="text-end">
               <button type="button" class="tl-btn tl-btn--outline tl-btn--sm att-edit-btn" 
@@ -363,7 +409,10 @@
     }
 
     // INIT
-    loadCities(1);
-    loadAttractions(1);
+    (async function init() {
+      await Promise.allSettled([loadCountriesOptions(), loadCitiesOptions()]);
+      loadCities(1);
+      loadAttractions(1);
+    })();
   });
 })();

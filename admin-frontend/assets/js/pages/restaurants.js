@@ -91,7 +91,6 @@
               <table class="tl-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Name</th>
                     <th>City</th>
                     <th>Address</th>
@@ -105,8 +104,7 @@
                   ${restaurants.map(function (restaurant) {
                     return `
                       <tr>
-                        <td><strong>#${P.escape(P.display(restaurant.id))}</strong></td>
-                        <td>${P.escape(P.display(restaurant.name))}</td>
+                        <td><strong>${P.escape(P.display(restaurant.name))}</strong></td>
                         <td>${P.escape(P.display(restaurant.city))}</td>
                         <td>${P.escape(P.display(restaurant.address))}</td>
                         <td>${restaurant.average_cost_for_two != null ? `$${P.escape(restaurant.average_cost_for_two)}` : "—"}</td>

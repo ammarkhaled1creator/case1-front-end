@@ -60,7 +60,6 @@
             <table class="tl-table">
               <thead>
                 <tr>
-                  <th>ID</th>
                   <th>Sender</th>
                   <th>Message Preview</th>
                   <th>Received Date</th>
@@ -74,7 +73,6 @@
                   const messageText = m.message || "";
                   return `
                     <tr>
-                      <td><strong>#${P.escape(P.display(m.id))}</strong></td>
                       <td>
                         <strong>${P.escape(senderName)}</strong>
                         ${senderEmail ? `<div class="tl-metadata" style="font-size: 11px;">${P.escape(senderEmail)}</div>` : ''}

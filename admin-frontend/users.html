@@ -57,9 +57,14 @@
               <span class="tl-metadata">Registered user accounts</span>
             </div>
 
-            <button id="usersRefresh" class="tl-btn tl-btn--outline tl-btn--sm" type="button">
-              <i class="bi bi-arrow-clockwise"></i> Refresh
-            </button>
+            <div class="d-flex gap-2">
+              <button id="addUserBtn" class="tl-btn tl-btn--primary tl-btn--sm" type="button" data-bs-toggle="modal" data-bs-target="#userCreateModal">
+                <i class="bi bi-person-plus"></i> Add User
+              </button>
+              <button id="usersRefresh" class="tl-btn tl-btn--outline tl-btn--sm" type="button">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+              </button>
+            </div>
           </div>
 
           <div id="usersState" style="padding: 0 24px 24px;"></div>

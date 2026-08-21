@@ -21,14 +21,27 @@
     return window.TL.Api.put(`/bookings/${encodeURIComponent(id)}`, data);
   }
 
-  // POST /admin/bookings/{id}/assign-guide
-  function assignGuide(id, tourGuideId) {
-    return window.TL.Api.post(`/bookings/${encodeURIComponent(id)}/assign-guide`, { tour_guide_id: tourGuideId });
+  // DELETE /admin/bookings/{id}
+  function deleteBooking(id) {
+    return window.TL.Api.delete(`/bookings/${encodeURIComponent(id)}`);
+  }
+
+  // POST /admin/bookings/{id}/assign-guide — body: { tour_guide_id }
+  function assignTourGuide(id, tourGuideId) {
+    return window.TL.Api.post(`/bookings/${encodeURIComponent(id)}/assign-guide`, {
+      tour_guide_id: tourGuideId,
+    });
   }
 
   // GET /admin/tour-guides/available
-  function getAvailableGuides() {
-    return window.TL.Api.get("/tour-guides/available");
+  function getAvailableTourGuides(bookingIdOrParams) {
+    let query;
+    if (typeof bookingIdOrParams === "object" && bookingIdOrParams !== null) {
+      query = bookingIdOrParams;
+    } else if (bookingIdOrParams) {
+      query = { booking_id: bookingIdOrParams };
+    }
+    return window.TL.Api.get("/tour-guides/available", query);
   }
 
   window.TL = window.TL || {};
@@ -37,7 +50,7 @@
     getBooking,
     updateBooking,
     deleteBooking,
-    assignGuide,
-    getAvailableGuides,
+    assignTourGuide,
+    getAvailableTourGuides,
   };
 })();

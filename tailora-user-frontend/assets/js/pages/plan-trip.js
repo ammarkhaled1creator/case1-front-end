@@ -94,50 +94,28 @@
       return null;
     }
 
-    if (typeof country === "number" && Number.isFinite(country) && country > 0) {
-      return country;
-    }
-
-    if (typeof country === "string") {
-      const parsed = Number(country);
-      if (Number.isFinite(parsed) && parsed > 0) return parsed;
-    }
-
     const value =
       country.id ??
       country.country_id ??
       country.countryId ??
       country.CountryId ??
       country.Id ??
-      (country.country && (country.country.id ?? country.country.country_id)) ??
       null;
 
-    if (value !== null && value !== undefined && value !== "") {
-      const id = Number(value);
-      if (Number.isFinite(id) && id > 0) {
-        return id;
-      }
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return null;
     }
 
-    const name = typeof country === "string" ? country : (country.name || country.official_name || (window.TL && window.TL.Util && window.TL.Util.name(country)));
-    if (name && Array.isArray(state.allCountries) && state.allCountries.length) {
-      const norm = normalizeText(name);
-      const match = state.allCountries.find(c => 
-        normalizeText(c.name) === norm || 
-        normalizeText(c.official_name) === norm ||
-        normalizeText(c.code2) === norm ||
-        normalizeText(c.code3) === norm
-      );
-      if (match) {
-        const matchVal = match.id ?? match.country_id;
-        if (matchVal) {
-          const matchId = Number(matchVal);
-          if (Number.isFinite(matchId) && matchId > 0) return matchId;
-        }
-      }
-    }
+    const id =
+      Number(value);
 
-    return null;
+    return Number.isFinite(id)
+      ? id
+      : null;
   }
 
   /* =========================================================
@@ -208,26 +186,7 @@
 
   function validateStep() {
     if (state.step === 1) {
-      if (!state.country || !state.country.name) {
-        const inputVal = document.getElementById("plan-country")?.value?.trim();
-        if (inputVal && Array.isArray(state.allCountries) && state.allCountries.length) {
-          const norm = normalizeText(inputVal);
-          const matched = state.allCountries.find(c =>
-            normalizeText(c.name) === norm ||
-            normalizeText(c.official_name) === norm ||
-            normalizeText(c.code2) === norm ||
-            normalizeText(c.code3) === norm ||
-            normalizeText(c.name).includes(norm)
-          );
-          if (matched) {
-            selectCountry(matched);
-          } else {
-            selectCountry({ id: 1, name: inputVal });
-          }
-        }
-      }
-
-      if (!state.country || !state.country.name) {
+      if (!state.country) {
         window.TL.toast(
           "Choose a country",
           "error"
@@ -237,7 +196,12 @@
       }
 
       if (!state.country.id) {
-        state.country.id = extractCountryId(state.country) || 1;
+        window.TL.toast(
+          "Invalid country ID",
+          "error"
+        );
+
+        return false;
       }
     }
 
@@ -396,22 +360,33 @@
 
   async function loadCountries() {
     try {
-      let response;
-      if (window.TL && window.TL.Countries && typeof window.TL.Countries.allFull === "function") {
-        response = await window.TL.Countries.allFull();
-      } else {
-        response = await window.TL.Api.get("/countries", { per_page: 500 });
-      }
+      const response =
+        await window.TL.Countries.all();
 
-      state.allCountries = Array.isArray(response)
-        ? response
-        : window.TL.Util.list(response);
+      state.allCountries =
+        Array.isArray(response)
+          ? response
+          : window.TL.Util.list(
+              response
+            );
 
-      console.log("ALL COUNTRIES:", state.allCountries.length);
+      console.log(
+        "ALL COUNTRIES:",
+        state.allCountries.length
+      );
+
     } catch (err) {
-      console.error("Countries error:", err);
+      console.error(
+        "Countries error:",
+        err
+      );
+
       state.allCountries = [];
-      window.TL.toast("Couldn't load countries", "error");
+
+      window.TL.toast(
+        "Couldn't load countries",
+        "error"
+      );
     }
   }
 
@@ -421,23 +396,35 @@
 
   async function loadAllCities() {
     try {
-      console.log("Loading all cities...");
-      let response;
-      if (window.TL && window.TL.Cities && typeof window.TL.Cities.allFull === "function") {
-        response = await window.TL.Cities.allFull();
-      } else {
-        response = await window.TL.Api.get("/cities", { per_page: 500 });
-      }
+      console.log(
+        "Loading all cities..."
+      );
 
-      state.allCities = Array.isArray(response)
-        ? response
-        : window.TL.Util.list(response);
+      const response =
+        await window.TL.Cities.allFull();
 
-      console.log("ALL CITIES LOADED:", state.allCities.length);
+      state.allCities =
+        Array.isArray(response)
+          ? response
+          : [];
+
+      console.log(
+        "ALL CITIES LOADED:",
+        state.allCities.length
+      );
+
     } catch (err) {
-      console.error("Cities loading error:", err);
+      console.error(
+        "Cities loading error:",
+        err
+      );
+
       state.allCities = [];
-      window.TL.toast("Couldn't load cities", "error");
+
+      window.TL.toast(
+        "Couldn't load cities",
+        "error"
+      );
     }
   }
 
@@ -445,160 +432,157 @@
      STEP 1 — COUNTRY
   ========================================================= */
 
-  function getCountryDisplayName(country) {
-    if (!country) return "";
-    if (typeof country === "string") return country;
-    return country.name ||
-      country.official_name ||
-      country.country_information?.name ||
-      country.country_information?.official_name ||
-      (window.TL && window.TL.Util && window.TL.Util.name(country)) ||
-      "";
-  }
-
-  function showCountrySuggestions(query = "") {
-    const input = document.getElementById("plan-country");
-    const box = document.getElementById("plan-country-suggest");
-    if (!input || !box) return;
-
-    if (!Array.isArray(state.allCountries) || !state.allCountries.length) {
-      box.innerHTML = `<div style="padding:14px;font-size:13.5px;color:var(--tl-text-muted);">Loading countries...</div>`;
-      box.classList.add("is-open");
-      loadCountries().then(() => {
-        if (document.activeElement === input || box.classList.contains("is-open")) {
-          showCountrySuggestions(input.value);
-        }
-      });
-      return;
-    }
-
-    const q = normalizeText(query);
-    let matches = [];
-
-    if (!q) {
-      // Load all countries from the database in the dropdown
-      matches = state.allCountries;
-    } else {
-      matches = state.allCountries.filter((country) => {
-        const name = normalizeText(getCountryDisplayName(country));
-        const official = normalizeText(country?.official_name || country?.country_information?.official_name || "");
-        const code2 = normalizeText(country?.code2 || country?.country_information?.code2 || "");
-        const code3 = normalizeText(country?.code3 || country?.country_information?.code3 || "");
-        return name.includes(q) || official.includes(q) || code2.includes(q) || code3.includes(q);
-      });
-    }
-
-    if (!matches.length) {
-      box.innerHTML = `<div style="padding:14px;font-size:13.5px;color:var(--tl-text-muted);">No matching countries found</div>`;
-    } else {
-      box.innerHTML = matches
-        .map((country, idx) => {
-          const name = getCountryDisplayName(country);
-          const id = extractCountryId(country) || (idx + 1);
-          return `
-            <button
-              type="button"
-              class="tl-suggest-item"
-              data-country-id="${window.TL.Util.escape(id)}"
-              data-country-name="${window.TL.Util.escape(name)}"
-              style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;text-align:left;cursor:pointer;background:none;border:none;color:inherit;font-size:14px;"
-            >
-              <span style="font-size:16px;">🌍</span>
-              <span style="font-weight:500;">${window.TL.Util.escape(name)}</span>
-            </button>
-          `;
-        })
-        .join("");
-    }
-
-    box.classList.add("is-open");
-  }
-
   function wireCountrySearch() {
-    const input = document.getElementById("plan-country");
-    const box = document.getElementById("plan-country-suggest");
+    const input =
+      document.getElementById(
+        "plan-country"
+      );
+
+    const box =
+      document.getElementById(
+        "plan-country-suggest"
+      );
 
     if (!input || !box) {
       return;
     }
 
-    input.addEventListener("focus", () => {
-      showCountrySuggestions(input.value);
-    });
+    function renderSuggestions(query = "") {
+      const q = normalizeText(query);
+      const matches = state.allCountries
+        .filter((country) => {
+          if (!q) return true;
+          const name = normalizeText(country.name || window.TL.Util.name(country));
+          const officialName = normalizeText(country?.official_name);
+          const code2 = normalizeText(country?.code2);
+          const code3 = normalizeText(country?.code3);
+          return name.includes(q) || officialName.includes(q) || code2 === q || code3 === q;
+        });
 
-    input.addEventListener("click", () => {
-      showCountrySuggestions(input.value);
-    });
+      if (!matches.length) {
+        box.innerHTML = `
+          <button
+            type="button"
+            disabled
+          >
+            No countries found
+          </button>
+        `;
+      } else {
+        box.innerHTML = matches
+          .map((country) => {
+            const id =
+              country.id ||
+              window.TL.Util.id(
+                country
+              );
 
-    input.addEventListener("input", () => {
-      showCountrySuggestions(input.value);
-    });
+            const name =
+              country.name ||
+              window.TL.Util.name(
+                country
+              );
 
-    function handleSuggestSelect(e) {
-      const btn = e.target.closest("button[data-country-name]");
-      if (!btn) return;
+            const flag = country.flag?.png || (typeof country.flag === 'string' ? country.flag : "");
 
-      e.preventDefault();
-      e.stopPropagation();
-
-      const cId = btn.dataset.countryId;
-      const cName = btn.dataset.countryName;
-
-      let countryObj = state.allCountries.find((item) => {
-        const itemId = extractCountryId(item);
-        const itemName = normalizeText(getCountryDisplayName(item));
-        return (cId && itemId && String(itemId) === String(cId)) || (cName && itemName === normalizeText(cName));
-      });
-
-      if (!countryObj && cName) {
-        countryObj = { id: Number(cId) || 1, name: cName };
+            return `
+              <button
+                type="button"
+                data-country-id="${window.TL.Util.escape(
+                  id
+                )}"
+                style="display:flex;align-items:center;gap:8px;text-align:left;"
+              >
+                ${flag ? `<img src="${window.TL.Util.escape(flag)}" alt="" style="width:20px;height:14px;object-fit:cover;border-radius:2px;">` : ""}
+                <span>${window.TL.Util.escape(name)}</span>
+              </button>
+            `;
+          })
+          .join("");
       }
 
-      if (countryObj) {
-        selectCountry(countryObj);
-        box.classList.remove("is-open");
-      }
+      box.classList.add("is-open");
     }
 
-    box.addEventListener("mousedown", handleSuggestSelect);
-    box.addEventListener("click", handleSuggestSelect);
+    input.addEventListener(
+      "input",
+      () => {
+        state.country = null;
+        renderSelectedCountry();
+        renderSuggestions(input.value);
+      }
+    );
 
-    input.addEventListener("blur", () => {
-      setTimeout(() => {
-        box.classList.remove("is-open");
-      }, 250);
-    });
+    input.addEventListener(
+      "focus",
+      () => {
+        renderSuggestions(input.value);
+      }
+    );
+
+    input.addEventListener(
+      "click",
+      () => {
+        renderSuggestions(input.value);
+      }
+    );
 
     document.addEventListener("click", (e) => {
-      if (!box.contains(e.target) && e.target !== input) {
+      if (!input.contains(e.target) && !box.contains(e.target)) {
         box.classList.remove("is-open");
       }
     });
+
+    box.addEventListener(
+      "click",
+      (e) => {
+        const btn =
+          e.target.closest(
+            "button[data-country-id]"
+          );
+
+        if (!btn) {
+          return;
+        }
+
+        const country =
+          state.allCountries.find(
+            (item) =>
+              String(
+                item.id ||
+                window.TL.Util.id(
+                  item
+                )
+              ) ===
+              String(
+                btn.dataset.countryId
+              )
+          );
+
+        if (!country) {
+          return;
+        }
+
+        box.classList.remove("is-open");
+
+        selectCountry(
+          country
+        );
+      }
+    );
   }
 
   function selectCountry(country) {
-    let countryId = extractCountryId(country);
-    let countryName = (window.TL && window.TL.Util && window.TL.Util.name(country)) || country?.name || (typeof country === "string" ? country : "");
-
-    if (!countryId && countryName && Array.isArray(state.allCountries)) {
-      const norm = normalizeText(countryName);
-      const matched = state.allCountries.find(c => 
-        normalizeText(c.name) === norm || 
-        normalizeText(c.official_name) === norm
-      );
-      if (matched) {
-        countryId = extractCountryId(matched);
-        if (!countryName) countryName = window.TL.Util.name(matched);
-      }
-    }
-
-    if (!countryId && countryName) {
-      countryId = 1;
-    }
-
     state.country = {
-      id: countryId,
-      name: countryName
+      id:
+        extractCountryId(
+          country
+        ),
+
+      name:
+        window.TL.Util.name(
+          country
+        )
     };
 
     const input =
@@ -672,65 +656,40 @@
   function filterCitiesForCountry() {
     if (!state.country) {
       state.cities = [];
+
       renderCityDays();
+
       return;
     }
 
-    const selectedCountryName = normalizeText(state.country.name);
-    const selectedCountryId = state.country.id ? String(state.country.id) : null;
-
-    // Find country object in state.allCountries for aliases/codes
-    const countryObj = Array.isArray(state.allCountries)
-      ? state.allCountries.find((c) => {
-          const cId = extractCountryId(c);
-          const cName = normalizeText(getCountryDisplayName(c));
-          return (selectedCountryId && cId && String(cId) === selectedCountryId) || (selectedCountryName && cName === selectedCountryName);
-        })
-      : null;
-
-    const officialName = countryObj ? normalizeText(countryObj.official_name || countryObj.country_information?.official_name || "") : "";
-    const code2 = countryObj ? normalizeText(countryObj.code2 || countryObj.country_information?.code2 || "") : "";
-
-    const matchedCities = state.allCities.filter((city) => {
-      const cityCountryName = normalizeText(
-        city?.country?.name ||
-        city?.country_name ||
-        city?.countryName ||
-        (typeof city?.country === "string" ? city.country : "")
+    const selectedCountryName =
+      normalizeText(
+        state.country.name
       );
 
-      const cityCountryOfficial = normalizeText(city?.country?.official_name || "");
-      const cityCountryCode = normalizeText(city?.country?.code2 || "");
-      const cityCountryId = city?.country_id || city?.countryId || city?.country?.id;
+    const matchedCities =
+      state.allCities.filter(
+        (city) => {
+          const cityCountryName =
+            normalizeText(
+              city?.country?.name
+            );
 
-      const idMatch = Boolean(
-        selectedCountryId &&
-        cityCountryId &&
-        String(cityCountryId) === selectedCountryId
+          return (
+            cityCountryName ===
+            selectedCountryName
+          );
+        }
       );
 
-      const nameMatch = Boolean(
-        selectedCountryName &&
-        cityCountryName &&
-        (
-          cityCountryName === selectedCountryName ||
-          (officialName && cityCountryName === officialName) ||
-          (cityCountryOfficial && cityCountryOfficial === selectedCountryName) ||
-          (code2 && cityCountryCode === code2) ||
-          (cityCountryName.length > 3 && selectedCountryName.length > 3 && (cityCountryName.includes(selectedCountryName) || selectedCountryName.includes(cityCountryName)))
-        )
+    state.cities =
+      window.TL.Util.uniqueBy(
+        matchedCities,
+        (city) => window.TL.Util.name(city)
       );
-
-      return idMatch || nameMatch;
-    });
-
-    state.cities = window.TL.Util.uniqueBy(
-      matchedCities,
-      (city) => window.TL.Util.name(city)
-    );
 
     console.log(
-      `CITIES FOR ${state.country.name} (ID: ${state.country.id}):`,
+      `CITIES FOR ${state.country.name}:`,
       state.cities.length
     );
 
@@ -2543,13 +2502,7 @@
       );
 
       if (tripId && (state.wantsTourGuide || window.TL.Cart.getWantsTourGuide())) {
-        try {
-          const guides = await window.TL.TourGuide.getTourGuides();
-          if (guides.length > 0) {
-            window.TL.Cart.setTourGuide(guides[0]);
-            await window.TL.TourGuide.assignTripToGuide(tripId, guides[0].id);
-          }
-        } catch (e) {}
+        window.TL.Cart.setWantsTourGuide(true);
       }
 
       /*
@@ -3139,16 +3092,7 @@
       }
 
       if (state.wantsTourGuide || window.TL.Cart.getWantsTourGuide()) {
-        try {
-          const guides = await window.TL.TourGuide.getTourGuides();
-          if (guides.length > 0) {
-            window.TL.Cart.setTourGuide(guides[0]);
-            await window.TL.TourGuide.assignTripToGuide(state.tripId, guides[0].id);
-            window.TL.toast(`Assigned tour guide: ${guides[0].name || "Tour Guide"}!`);
-          }
-        } catch (e) {
-          console.warn("Could not assign guide during trip creation:", e);
-        }
+        window.TL.Cart.setWantsTourGuide(true);
       }
 
       window.TL.toast(
@@ -3188,27 +3132,10 @@
     checkbox.checked = window.TL.Cart.getWantsTourGuide();
     state.wantsTourGuide = checkbox.checked;
 
-    checkbox.addEventListener("change", async () => {
+    checkbox.addEventListener("change", () => {
       const isChecked = checkbox.checked;
       state.wantsTourGuide = isChecked;
       window.TL.Cart.setWantsTourGuide(isChecked);
-
-      if (isChecked) {
-        try {
-          const guides = await window.TL.TourGuide.getTourGuides();
-          if (guides.length > 0) {
-            const guide = guides[0];
-            state.tourGuideId = guide.id;
-            window.TL.Cart.setTourGuide(guide);
-            window.TL.toast(`Assigned tour guide: ${guide.name || "Tour Guide"}!`);
-          }
-        } catch (e) {
-          console.warn("Tour guide query note:", e);
-        }
-      } else {
-        state.tourGuideId = null;
-        window.TL.Cart.setTourGuide(null);
-      }
     });
   }
 
@@ -3258,41 +3185,63 @@
       );
     }
 
-    // Wire all UI controls and navigation immediately
+    try {
+      await loadCountries();
+
+      await loadAllCities();
+
+    } catch (err) {
+      console.error(
+        "Planner initial load error:",
+        err
+      );
+    }
+
     wireCountrySearch();
+
     wireDates();
+
     wireBudget();
+
     wireTravelers();
+
     wireStyles();
+
     wirePlanTourGuide();
+
     wireAiAssistant();
 
-    const nextBtn = document.getElementById("planner-next");
-    const backBtn = document.getElementById("planner-back");
+    renderCityDays();
+
+    updateStepUI();
+
+    const nextBtn =
+      document.getElementById(
+        "planner-next"
+      );
+
+    const backBtn =
+      document.getElementById(
+        "planner-back"
+      );
 
     if (nextBtn) {
-      nextBtn.addEventListener("click", handleNext);
+      nextBtn.addEventListener(
+        "click",
+        handleNext
+      );
     }
 
     if (backBtn) {
-      backBtn.addEventListener("click", handleBack);
+      backBtn.addEventListener(
+        "click",
+        handleBack
+      );
     }
 
-    updateStepUI();
-    renderCityDays();
-
-    // Fetch countries and cities
-    try {
-      await Promise.all([loadCountries(), loadAllCities()]);
-    } catch (err) {
-      console.error("Planner initial load error:", err);
-    }
-
-    if (state.country) {
-      filterCitiesForCountry();
-    }
-
-    console.log("PLAN TRIP INITIALIZED");
+    console.log(
+      "PLAN TRIP INITIALIZED"
+    );
   }
 
   document.addEventListener(

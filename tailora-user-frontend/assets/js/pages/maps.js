@@ -326,18 +326,23 @@
       return state.pageCache.get(cacheKey);
     }
 
-    const res = await window.TL.Api.get("/attractions", {
-      page: pageNum,
-      per_page: PAGE_SIZE
-    });
+    try {
+      const res = await window.TL.Api.get("/attractions", {
+        page: pageNum,
+        per_page: PAGE_SIZE
+      });
 
-    const rawItems = res && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
-    if (res && res.total !== undefined) state.categories.attraction.total = Number(res.total);
-    if (res && res.last_page !== undefined) state.categories.attraction.lastPage = Number(res.last_page);
+      const rawItems = res && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
+      if (res && res.total !== undefined) state.categories.attraction.total = Number(res.total);
+      if (res && res.last_page !== undefined) state.categories.attraction.lastPage = Number(res.last_page);
 
-    const normalized = rawItems.map((item) => normalize(item, "attraction")).filter(Boolean);
-    state.pageCache.set(cacheKey, normalized);
-    return normalized;
+      const normalized = rawItems.map((item) => normalize(item, "attraction")).filter(Boolean);
+      state.pageCache.set(cacheKey, normalized);
+      return normalized;
+    } catch (e) {
+      console.error("Failed to fetch attractions for map:", e);
+      return [];
+    }
   }
 
   async function fetchHotelsPage(pageNum) {
@@ -433,53 +438,81 @@
 
     if (typeof L === "undefined") {
       console.error("Leaflet was not loaded.");
+      const errorEl = document.getElementById("map-error");
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.textContent = "Map library is loading or blocked by your connection. Please refresh the page.";
+      }
+      const loadingEl = document.getElementById("map-loading");
+      if (loadingEl) {
+        loadingEl.hidden = true;
+        loadingEl.style.display = "none";
+      }
       return false;
     }
 
-    state.map = L.map("tailora-map", {
-      zoomControl: true,
-      attributionControl: true
-    }).setView([25, 10], 2);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      minZoom: 2,
-      attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(state.map);
-
-    if (typeof L.markerClusterGroup === "function") {
-      state.markerCluster = L.markerClusterGroup({
-        showCoverageOnHover: false,
-        zoomToBoundsOnClick: true,
-        spiderfyOnMaxZoom: true,
-        removeOutsideVisibleBounds: true,
-        animate: true,
-        disableClusteringAtZoom: 9,
-        maxClusterRadius: 45
-      });
-      state.map.addLayer(state.markerCluster);
+    if (mapElement._leaflet_id && state.map) {
+      setTimeout(() => state.map && state.map.invalidateSize(true), 200);
+      return true;
+    }
+    if (mapElement._leaflet_id && !state.map) {
+      mapElement._leaflet_id = null;
     }
 
-    state.map.on("click", function (event) {
-      if (!state.start) {
-        setStart({
-          name: "Selected Point",
-          lat: event.latlng.lat,
-          lng: event.latlng.lng
+    try {
+      state.map = L.map("tailora-map", {
+        zoomControl: true,
+        attributionControl: true
+      }).setView([25, 10], 2);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        minZoom: 2,
+        attribution: "&copy; OpenStreetMap contributors"
+      }).addTo(state.map);
+
+      if (typeof L.markerClusterGroup === "function") {
+        state.markerCluster = L.markerClusterGroup({
+          showCoverageOnHover: false,
+          zoomToBoundsOnClick: true,
+          spiderfyOnMaxZoom: true,
+          removeOutsideVisibleBounds: true,
+          animate: true,
+          disableClusteringAtZoom: 9,
+          maxClusterRadius: 45
         });
-      } else if (!state.end) {
-        setEnd({
-          name: "Selected Point",
-          lat: event.latlng.lat,
-          lng: event.latlng.lng
-        });
+        state.map.addLayer(state.markerCluster);
       }
-    });
 
-    setTimeout(() => state.map && state.map.invalidateSize(true), 300);
-    setTimeout(() => state.map && state.map.invalidateSize(true), 1000);
+      state.map.on("click", function (event) {
+        if (!state.start) {
+          setStart({
+            name: "Selected Point",
+            lat: event.latlng.lat,
+            lng: event.latlng.lng
+          });
+        } else if (!state.end) {
+          setEnd({
+            name: "Selected Point",
+            lat: event.latlng.lat,
+            lng: event.latlng.lng
+          });
+        }
+      });
 
-    return true;
+      setTimeout(() => state.map && state.map.invalidateSize(true), 300);
+      setTimeout(() => state.map && state.map.invalidateSize(true), 1000);
+
+      return true;
+    } catch (err) {
+      console.error("Leaflet init error:", err);
+      const loadingEl = document.getElementById("map-loading");
+      if (loadingEl) {
+        loadingEl.hidden = true;
+        loadingEl.style.display = "none";
+      }
+      return false;
+    }
   }
 
   // ============================================================
@@ -667,7 +700,10 @@
       errorEl.textContent = "";
     }
 
-    if (loadingEl) loadingEl.hidden = false;
+    if (loadingEl) {
+      loadingEl.hidden = false;
+      loadingEl.style.display = "flex";
+    }
 
     const catState = getActiveCategoryState();
 
@@ -682,7 +718,10 @@
       }
       showToast("Failed to load map locations: " + err.message, "error");
     } finally {
-      if (loadingEl) loadingEl.hidden = true;
+      if (loadingEl) {
+        loadingEl.hidden = true;
+        loadingEl.style.display = "none";
+      }
       isPaginating = false;
       updatePaginationUI();
     }

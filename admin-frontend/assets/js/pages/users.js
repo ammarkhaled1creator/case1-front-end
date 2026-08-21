@@ -35,7 +35,6 @@
           <table class="tl-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Country</th>
@@ -49,7 +48,6 @@
                 const isActive = u.is_active === 1 || u.is_active === true || u.is_active === "1" || String(u.status || "").toLowerCase() === "active" || u.is_active === undefined;
                 return `
                 <tr>
-                  <td><strong>#${P.escape(P.display(u.id))}</strong></td>
                   <td><strong>${P.escape(P.display(u.name))}</strong></td>
                   <td>${P.escape(P.display(u.email))}</td>
                   <td>${P.escape(P.display(u.dist_country || u.country || "—"))}</td>

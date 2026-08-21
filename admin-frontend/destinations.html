@@ -124,8 +124,10 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="tl-field">
-                  <label for="city_country_id">Country ID <span class="text-danger">*</span></label>
-                  <input id="city_country_id" name="country_id" type="number" class="tl-input" placeholder="e.g. 1" required min="1">
+                  <label for="city_country_id">Country <span class="text-danger">*</span></label>
+                  <select id="city_country_id" name="country_id" class="tl-select" required>
+                    <option value="">Select country</option>
+                  </select>
                   <div class="tl-field-error" data-error-for="country_id"></div>
                 </div>
               </div>
@@ -179,8 +181,10 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="tl-field">
-                  <label for="att_city_id">City ID <span class="text-danger">*</span></label>
-                  <input id="att_city_id" name="city_id" type="number" class="tl-input" placeholder="e.g. 1" required min="1">
+                  <label for="att_city_id">City <span class="text-danger">*</span></label>
+                  <select id="att_city_id" name="city_id" class="tl-select" required>
+                    <option value="">Select city</option>
+                  </select>
                   <div class="tl-field-error" data-error-for="city_id"></div>
                 </div>
               </div>
@@ -267,8 +271,10 @@
             <input type="hidden" id="city_update_id" name="id">
 
             <div class="tl-field">
-              <label for="city_update_country_id">Country ID <span class="text-danger">*</span></label>
-              <input id="city_update_country_id" name="country_id" type="number" class="tl-input" required>
+              <label for="city_update_country_id">Country <span class="text-danger">*</span></label>
+              <select id="city_update_country_id" name="country_id" class="tl-select" required>
+                <option value="">Select country</option>
+              </select>
               <div class="tl-field-error" data-error-for="country_id"></div>
             </div>
 
@@ -321,8 +327,10 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="tl-field">
-                  <label for="att_update_city_id">City ID <span class="text-danger">*</span></label>
-                  <input id="att_update_city_id" name="city_id" type="number" class="tl-input" required>
+                  <label for="att_update_city_id">City <span class="text-danger">*</span></label>
+                  <select id="att_update_city_id" name="city_id" class="tl-select" required>
+                    <option value="">Select city</option>
+                  </select>
                   <div class="tl-field-error" data-error-for="city_id"></div>
                 </div>
               </div>

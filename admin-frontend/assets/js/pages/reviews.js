@@ -65,7 +65,6 @@
           <table class="tl-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>User</th>
                 <th>Review Type</th>
                 <th>Target Details</th>
@@ -100,7 +99,6 @@
 
                 return `
                   <tr>
-                    <td><strong>#${P.escape(P.display(review.id))}</strong></td>
                     <td>
                       <strong>${P.escape(user)}</strong>
                       ${userEmail ? `<div class="tl-metadata" style="font-size:11px;">${P.escape(userEmail)}</div>` : ""}

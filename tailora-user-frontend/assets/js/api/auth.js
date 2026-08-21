@@ -140,8 +140,10 @@ async function register({
 
   function handle401() {
     window.TL.Api.clearToken();
-    if (!isAuthPage()) {
-      const next = encodeURIComponent(window.location.pathname.split("/").pop());
+    const protectedPages = ["profile.html", "bookings.html", "payment.html", "chat.html"];
+    const current = window.location.pathname.split("/").pop() || "index.html";
+    if (protectedPages.includes(current)) {
+      const next = encodeURIComponent(current + window.location.search);
       window.location.href = `${LOGIN_PAGE}?next=${next}`;
     }
   }

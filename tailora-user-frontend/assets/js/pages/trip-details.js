@@ -21,7 +21,7 @@
     return new URLSearchParams(window.location.search).get(name);
   }
 
-  function renderHeader(trip) {
+  function renderHeader(trip, userBookings = []) {
     let countryName = window.TL.Util.pick(
       trip,
       ["country.name", "country_name", "countryName"],
@@ -158,17 +158,52 @@
             : ""
         }
 
-        ${
-          (trip.wants_tour_guide || trip.tour_guide || trip.tourGuide || trip.tour_guide_requests?.length || trip.tourGuideRequests?.length)
-            ? (trip.tour_guide?.name || trip.tourGuide?.name)
-              ? `<span class="tl-badge" style="border-color:var(--tl-teal);color:var(--tl-teal);">
-                  👤 Tour Guide: ${window.TL.Util.escape(trip.tour_guide?.name || trip.tourGuide?.name)}
-                </span>`
-              : `<span class="tl-badge" style="border-color:#f59e0b;color:#f59e0b;">
-                  ⏳ Tour Guide: Pending
-                </span>`
-            : ""
-        }
+        ${(() => {
+          const tripBookings = Array.isArray(trip.bookings) ? trip.bookings : (Array.isArray(trip.data?.bookings) ? trip.data.bookings : []);
+          const allCandidateBookings = [...tripBookings, ...userBookings.filter(b => String(b.trip_id || b.trip?.id) === String(trip.id))];
+          
+          let requested = false;
+          let guideName = null;
+
+          const tripReqs = Array.isArray(trip.tour_guide_requests) ? trip.tour_guide_requests : (Array.isArray(trip.tourGuideRequests) ? trip.tourGuideRequests : []);
+          const acceptedTripReq = tripReqs.find(r => r.status === "accepted");
+          if (acceptedTripReq) {
+            requested = true;
+            const g = acceptedTripReq.tour_guide || acceptedTripReq.tourGuide;
+            if (g && (g.name || g.full_name)) guideName = g.name || g.full_name;
+          }
+
+          if (!guideName && (trip.tour_guide || trip.tourGuide)) {
+            const g = trip.tour_guide || trip.tourGuide;
+            if (g && (g.name || g.full_name)) {
+              requested = true;
+              guideName = g.name || g.full_name;
+            }
+          }
+
+          for (const b of allCandidateBookings) {
+            if (b.wants_tour_guide || b.tour_guide_id || (b.tour_guide_requests && b.tour_guide_requests.length) || (b.tourGuideRequests && b.tourGuideRequests.length)) {
+              requested = true;
+            }
+            const bReqs = Array.isArray(b.tour_guide_requests) ? b.tour_guide_requests : (Array.isArray(b.tourGuideRequests) ? b.tourGuideRequests : []);
+            const acceptedBReq = bReqs.find(r => r.status === "accepted");
+            const g = b.tour_guide || b.tourGuide || acceptedBReq?.tour_guide || acceptedBReq?.tourGuide;
+            if (g && (g.name || g.full_name)) {
+              guideName = g.name || g.full_name;
+              break;
+            }
+          }
+
+          if (guideName) {
+            return `<span class="tl-badge" style="background:rgba(32,227,194,0.15);color:var(--tl-teal);border-color:rgba(32,227,194,0.3);">👤 Tour Guide: ${window.TL.Util.escape(guideName)}</span>`;
+          }
+
+          if (requested) {
+            return `<span class="tl-badge" style="background:rgba(234,179,8,0.15);color:#FBBF24;border-color:rgba(234,179,8,0.3);">⏳ Tour Guide: Pending</span>`;
+          }
+
+          return "";
+        })()}
 
       </div>
     `;
@@ -686,7 +721,18 @@
         "tl-hidden"
       );
 
-      renderHeader(trip);
+      let userBookings = [];
+      try {
+        if (window.TL.Bookings && typeof window.TL.Bookings.all === "function") {
+          const bRes = await window.TL.Bookings.all();
+          userBookings = window.TL.Util.list(bRes);
+        } else if (window.TL.Api) {
+          const bRes = await window.TL.Api.get("/bookings");
+          userBookings = window.TL.Util.list(bRes);
+        }
+      } catch (e) {}
+
+      renderHeader(trip, userBookings);
 
       renderDayTabs();
 

@@ -28,12 +28,18 @@
 
 
   const Countries = {
-    all: function () {
-      return window.TL.Api.get("/countries");
+    all: function (query = {}) {
+      return window.TL.Api.get("/countries", query);
+    },
+
+    async allFull() {
+      const response = await window.TL.Api.get("/countries");
+      return window.TL.Util.list(response);
     },
 
     search: function (query) {
       return window.TL.Api.get("/countries/search", {
+        q: query,
         query: query
       });
     },
@@ -49,12 +55,37 @@
 
 
   const Cities = {
-    all: function () {
-      return window.TL.Api.get("/cities");
+    all: function (query = {}) {
+      return window.TL.Api.get("/cities", query);
+    },
+
+    async allFull() {
+      const all = [];
+      const perPage = 100;
+      let page = 1;
+
+      while (page <= 20) {
+        const response = await window.TL.Api.get("/cities", { page, per_page: perPage });
+        const items = window.TL.Util.list(response);
+
+        if (!items.length) break;
+
+        all.push(...items);
+
+        if (items.length < perPage) break;
+
+        page += 1;
+      }
+
+      return all;
     },
 
     get: function (id) {
       return window.TL.Api.get("/cities/" + id);
+    },
+
+    search: function (q) {
+      return window.TL.Api.get("/cities", { search: q });
     }
   };
 

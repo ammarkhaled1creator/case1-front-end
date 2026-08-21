@@ -8,6 +8,7 @@
     let currentPage = 1;
     const perPage = 10;
     let currentTripsList = [];
+    let countriesMap = {};
 
     function renderTable(rows, meta) {
       if (!rows) {
@@ -33,11 +34,10 @@
           <table class="tl-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Traveler</th>
-                <th>Destination</th>
-                <th>Travel Style</th>
+                <th>Destination (Country)</th>
                 <th>Days</th>
+                <th>Travel Style</th>
                 <th>Budget</th>
                 <th>Travelers</th>
                 <th>Created</th>
@@ -45,18 +45,36 @@
               </tr>
             </thead>
             <tbody>
-              ${rows.map(t => `
+              ${rows.map(t => {
+                const travelerName = t.user?.name ? t.user.name : (t.user_id ? `User #${t.user_id}` : "—");
+                const countryName = t.country?.name || t.country_name || t.dis_country || countriesMap[t.country_id] || "—";
+                
+                let numDays = t.num_days;
+                if (!numDays && t.start_date && t.end_date) {
+                  try {
+                    const s = new Date(t.start_date);
+                    const e = new Date(t.end_date);
+                    const diff = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+                    if (diff > 0) numDays = diff;
+                  } catch (_) {}
+                }
+                const daysDisplay = numDays ? `${numDays} days` : "—";
+                const datesInfo = (t.start_date && t.end_date) ? `<div class="tl-metadata" style="font-size: 11px;">(${t.start_date.split('T')[0]} to ${t.end_date.split('T')[0]})</div>` : "";
+
+                return `
                 <tr>
-                  <td><strong>#${P.escape(P.display(t.id))}</strong></td>
                   <td>
-                    <strong>${P.escape(t.user?.name ? t.user.name : (t.user_id ? `User #${t.user_id}` : "—"))}</strong>
+                    <strong>${P.escape(travelerName)}</strong>
                     ${t.user?.email ? `<div class="tl-metadata">${P.escape(t.user.email)}</div>` : ''}
                   </td>
-                  <td>${P.escape(P.display(t.dis_country || "—"))}</td>
+                  <td><strong>${P.escape(countryName)}</strong></td>
+                  <td>
+                    <div class="fw-semibold">${P.escape(daysDisplay)}</div>
+                    ${datesInfo}
+                  </td>
                   <td>${P.badge(t.travel_style || "Standard")}</td>
-                  <td>${P.escape(P.display(t.num_days))}</td>
                   <td>${P.escape(P.display(t.budget ? `$${t.budget}` : "—"))}</td>
-                  <td>${P.escape(P.display(t.number_of_travelers || 1))}</td>
+                  <td>${P.escape(P.display(t.number_of_travelers || t.travelers || 1))}</td>
                   <td>${P.escape(P.date(t.created_at || t.created))}</td>
                   <td>
                     <div class="tl-table-actions">
@@ -69,7 +87,8 @@
                     </div>
                   </td>
                 </tr>
-              `).join("")}
+              `;
+              }).join("")}
             </tbody>
           </table>
         </div>
@@ -84,10 +103,18 @@
       state.innerHTML = '<div class="tl-inline-loader"><div class="tl-spinner"></div></div>';
 
       try {
-        const [listRes, statsRes] = await Promise.allSettled([
+        const [listRes, statsRes, countriesRes] = await Promise.allSettled([
           TL.Trips.getTrips({ page: currentPage, per_page: perPage }),
           TL.Trips.getTripStatistics(),
+          window.TL.Api.get("/countries?per_page=500")
         ]);
+
+        if (countriesRes.status === "fulfilled") {
+          const cList = P.list(countriesRes.value) || P.data(countriesRes.value) || [];
+          cList.forEach(c => {
+            if (c && c.id) countriesMap[c.id] = c.name;
+          });
+        }
 
         // Populate User dropdown for create/edit forms
         (async function populateUsers() {

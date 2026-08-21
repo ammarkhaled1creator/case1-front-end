@@ -90,7 +90,6 @@
               <table class="tl-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
                     <th>Name</th>
                     <th>City</th>
                     <th>Price / Night</th>
@@ -103,8 +102,7 @@
                   ${hotels.map(function (hotel) {
                     return `
                       <tr>
-                        <td><strong>#${P.escape(P.display(hotel.id))}</strong></td>
-                        <td>${P.escape(P.display(hotel.name))}</td>
+                        <td><strong>${P.escape(P.display(hotel.name))}</strong></td>
                         <td>${P.escape(P.display(hotel.city))}</td>
                         <td>${hotel.price_per_night != null ? `$${P.escape(hotel.price_per_night)}` : "—"}</td>
                         <td>
